@@ -269,6 +269,7 @@ plot_ly(
 covarianzasRC=cov(Datos$tablaRendimientosCont[,-1])
 covarianzasRC
 ```
+
 ## Correlaciones para rendimientos continuos
 
 ```{r}
@@ -289,3 +290,62 @@ covarianzasPL
 correlacionesPL=cor(Datos$tablaPL[,-1])
 correlacionesPL
 ```
+
+## Conclusiones
+
+### Tabla resumen  rendimientos continuos
+
+Primero recordemos que la media en este caso es el valor esperado de la rentabilidad de la acción, la desviación estándar podemos interpretarlo como el riesgo o la volatilidad de la acción, que tan disperso está el rendimiento de la media y la mediana es el valor central de los datos. En esta tabla resumen podemos observar que según su media y desviación estándar la acción de GCF es la más atractiva porque tiene mayor rendimiento esperado con menor riesgo posible en comparación de las demás acciones, la acción de ARKF tiene una media alta y una desviación estándar también alta, lo cual indica que tiene un mayor retorno pero con mayor riesgo y la acción menos atractiva o nada atractiva sería la de VOLARA con su alta desviación estándar y su media cercana a 0 y negativa, esto nos dice que tiene un riesgo demasiado alto sin rendimiento esperado y mencionar que tiende a perder valor.
+
+En la segunda parte de la tabla vemos los cuantiles o percentiles, cabe recalcar que un percentil al 95% es el valor del rendimiento por debajo del cual se encuentran el 95% de las observaciones, es un valor cercano al “mejor escenario” sin ser el máximo y el percentil al 5% representa el valor de los rendimientos por debajo del 5% de las observaciones, es un valor cercano al “peor de los escenarios” sin ser el peor. 
+Ejemplos: 
+
+•	Observamos que para AAPL en el 5% de sus “días malos” tuvo caídas peores del -3.0565% y en sus “mejores días” ganó más del 2.578% y en promedio sus rendimientos oscilaban entre el -3.0565% y el 2.578%.
+
+•	Ahora observemos a ARKX, que sus rendimientos oscilaron entre -3.337% y 3.563%, donde su rango entre Q5 y Q95 fue mayor a AAPL, lo que indica que sus rendimientos son más volátiles que los de la primera acción que analizamos.
+
+
+### Tabla resumen PL
+
+Aquí estamos analizando datos en relación a las ganancias/pérdidas sobre una inversión, la media la podemos interpretar como el rendimiento promedio, si es una media positiva en promedio ganas, si es negativa en promedio pierdes. Para la mediana, si es mayor que la media, es más frecuentemente que ganes y si es menor, los días de pérdida pasan más. La desviación estándar mide la volatilidad de las pérdidas/ganancias, si es alta, es más riesgosa, si es baja, es más estable.
+
+Podemos observar a META, tiene una media de 16.0800%, una alta posibilidad de ganar en promedio, su desviación estándar es relativamente baja con 2.9361%, lo cual indica que es relativamente estable y por último su mediana es 16.8134%, 0.7334% mayor a la media, así que el ganar es relativamente más frecuente, sería una inversión atractiva.
+
+Ahora observemos a SBF, su media es negativa -0.5090%, lo que significa que en promedio pierdes, su desviación estándar es alta 6.6162%, es muy volátil y su mediana es negativa -1.0886%, o sea que la tendencia general es perder.
+
+Para la segunda parte de la tabla analizaremos los percentiles de las mismas acciones ya analizadas:
+
+•	META: sus pérdidas y ganancias oscilan entre -453.9% y 404.98%, es un perfil de riesgo conservador.
+
+•	SBF: sus pérdidas y ganancias van entre -11.67% y 10.56%, aquí es mayor el peor escenario y teniendo en cuenta que no es una inversión atractiva, esto hace que sea menos elegible para invertir.
+
+### Matriz de dispersión  rendimientos continuos
+
+Una matriz de dispersión nos muestra gráficos de dispersión individuales en un formato de cuadrícula o matriz para todas las combinaciones posibles de un conjunto de datos, en este caso la matriz de dispersión nos ayuda a saber la correlación de cada acción con las demás acciones, por ejemplo: 
+
+•	Observamos que AAPL tiene una relación nula con GOOGL
+
+•	Hay una correlación alta/perfecta positiva de META con META (esto es obvio, pero es para fines de ilustración), el valor de Y incrementa a medida que el valor de X incrementa.
+
+•	Hay una baja correlación positiva de META con ARKF, el valor de ARKF incrementa ligeramente a medida que META incrementa
+•	No hay correlaciones negativas.
+
+### Matriz de dispersión de PL 
+
+La matriz nos ayuda a visualizar los escenarios que generan pérdidas o ganancias simultáneas, por ejemplo:
+
+
+•	META tiene una correlación baja positiva con GOOGL y la mayoría de puntos se encuentran en el cuadrante positivo, lo cual indica que el portafolio conjunto de estas dos acciones tiende a ganar.
+
+•	AAPL tiene una ligera correlación positiva con GRMN, la mayoría de los puntos se encuentran cercanos a cero, lo que indica estabilidad y bajo riesgo.
+
+### Covarianzas y corelaciones
+
+Como podemos ver en las covarianzas de rendimientos continuos en su mayoría tenemos valores positivos, esto nos indica que ambas acciones comparadas tienen a moverse en la misma dirección, por lo tanto indican una correlación positiva y mientras mayor sea el número indica una relación más fuerte.
+Mayor Volatilidad: ALFAA.MX tiene la varianza más alta con un valor de 8.20. Esto indica que, históricamente, ha sido la acción más volátil y, por lo tanto, la más riesgosa del grupo de forma individual.
+Como sabemos la correlación se mide de 1 a -1 siendo 1 correlación perfecta y -1 uno correlación negativa perfecta, por lo tanto podemos concluir que es su mayoría todas las acciones crecen de forma más o menos directa, además de decir que las acciones mexicanas crecen de forma similar al índice IPC, viendo que la economía en general del país va bien. 
+En términos de correlaciones y covarianzas para P/L la verdad es que podemos tener conclusiones muy similares. 
+
+
+
+
