@@ -1,0 +1,174 @@
+---
+title: "01.c Tarea de repaso de Estadística descriptiva"
+author: "Por Abigail Sampedro Gutierrez y Diego Pedraza Barajas"
+lang: es
+format: pdf
+---
+Universidad Michoacana de San Nicolas de Hidalgo
+
+![](logo.png){width=200px}
+
+Lic. en Actuaria y Ciencia de Datos
+
+![](actuaria.jpg){width=200px}
+
+2105944a@umich.mx
+
+2105940x@umich.mx
+
+```{r setup, include=FALSE}
+## librerias necccesarias
+library(tidyverse)
+library(lubridate)
+
+# Librería de Yahoo Finance para descargar datos:
+source("https://raw.githubusercontent.com/OscarVDelatorreTorres/yahooFinance/main/datosMultiplesYahooFinance.R")
+
+```
+
+# Descarga de los datos
+ademas de descargarlos también los pasamos a pesos en caso de ser necesario
+
+```{r}
+tickerV=c("ALFAA.MX","BIMBOA.MX","GFNORTEO.MX","GRUMAB.MX","LACOMERUBC.MX","VOLARA.MX","AAPL","GOOGL","META","GRMN","ARKF","ARKX","^MXX","^DJI","^GSPC","CL=F","ZC=F","SB=F","GC=F")
+deD=Sys.Date()-365
+hastaD=Sys.Date()
+per="D"
+paridadFX="USDMXN=X"
+convertirFX=c(FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,FALSE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE)
+
+Datos=historico_multiples_precios(tickers=tickerV,de=deD,hasta=hastaD,periodicidad=per,fxRate=paridadFX,whichToFX=convertirFX)
+```
+
+## tabla de resumen con el rendimiento continuo
+
+```{r}
+# Vector de medias:
+mediaAcciones=colMeans(Datos$tablaRendimientosCont[,-1])
+# Vector de desviaciones estándar:
+desvAcciones=apply(Datos$tablaRendimientosCont[,-1],2,sd)
+# Vector de medianas:
+medianaAcciones = apply(Datos$tablaRendimientosCont[,-1], 2, median)
+# Quantil 5%
+q5Acciones = apply(Datos$tablaRendimientosCont[,-1], 2, quantile, probs = 0.05)
+# Quantil 95%
+q95Acciones = apply(Datos$tablaRendimientosCont[,-1], 2, quantile, probs = 0.95)
+# Conteo (número de observaciones)
+conteoAcciones = nrow(Datos$tablaRendimientosCont)
+
+# Tabla de resumen:
+tablaResumen=data.frame(Accion=names(Datos$tablaRendimientosCont)[-1],
+                        Media=mediaAcciones,
+                        DesviacionEstandar=desvAcciones,
+                        Mediana = medianaAcciones,
+                        Q5 = q5Acciones,
+                        Q95 = q95Acciones,
+                        min=apply(Datos$tablaRendimientosCont[,-1],2,min),
+                        max=apply(Datos$tablaRendimientosCont[,-1],2,max),
+                        Conteo = conteoAcciones
+                        )
+tablaResumen
+```
+
+## tabla resumen para datos ganancias/perdidas (PL)
+
+```{r}
+# 1. Calcular la tabla de P/L diaria (diferencia de precios)
+# Usamos la función diff() que calcula la diferencia entre un valor y su anterior.
+# Se aplica a cada columna de la tabla de precios (excepto la primera que es la fecha).
+tablaPL = as.data.frame(apply(Datos$tablaPrecios[,-1], 2, diff))
+
+# 2. Calcular las mismas métricas descriptivas para la tabla de P/L
+# Vector de medias P/L:
+mediaPL = colMeans(tablaPL)
+# Vector de desviaciones estándar P/L:
+desvPL = apply(tablaPL, 2, sd)
+# Vector de medianas P/L:
+medianaPL = apply(tablaPL, 2, median)
+# Quantil 5% P/L:
+q5PL = apply(tablaPL, 2, quantile, probs = 0.05)
+# Quantil 95% P/L:
+q95PL = apply(tablaPL, 2, quantile, probs = 0.95)
+# Conteo (número de observaciones). Será n-1 respecto a los precios.
+conteoPL = nrow(tablaPL)
+
+# 3. Crear la tabla de resumen para P/L
+tablaResumenPL = data.frame(Accion = names(tablaPL),
+                            Media_PL = mediaPL,
+                            DesviacionEstandar_PL = desvPL,
+                            Mediana_PL = medianaPL,
+                            Q5_PL = q5PL,
+                            Q95_PL = q95PL,
+                            min_PL = apply(tablaPL, 2, min),
+                            max_PL = apply(tablaPL, 2, max),
+                            Conteo = conteoPL
+                           )
+# 4. Mostrar la tabla resultante
+tablaResumenPL
+```
+
+
+
+## Grafica en plotly para los siguientes tres casos
+
+1. Ganancias/perdidas.
+2. precios base 100 a la fecha inicial.
+3. Rendimiento continuo.
+
+
+
+
+
+![](grafica1.png)
+
+
+## Mtrriz de dispersión para rendimientos continuos
+
+![](grafica2.png)
+
+### Acciones Mexicanas:
+
+![](grafica3.png)
+
+### Acciones de EEUU:
+
+![](grafica4.png)
+
+## Matriz de dispersion para P/L diario
+
+![](grafica5.png)
+
+### Acciones Mexicanas:
+
+![](grafica6.png)
+
+### Acciones de EEUU:
+
+![](grafica7.png)
+## Covarianzas para rendimientos continuos
+
+```{r}
+covarianzasRC=cov(Datos$tablaRendimientosCont[,-1])
+covarianzasRC
+```
+
+## Correlaciones para rendimientos continuos
+
+```{r}
+correlacionesRC=cor(Datos$tablaRendimientosCont[,-1])
+correlacionesRC
+```
+
+## Covarianza para P/L
+
+```{r}
+covarianzasPL=cov(Datos$tablaPL[,-1])
+covarianzasPL
+```
+
+## Correlaciones para P/L
+
+```{r}
+correlacionesPL=cor(Datos$tablaPL[,-1])
+correlacionesPL
+```
