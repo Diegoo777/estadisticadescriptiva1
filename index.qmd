@@ -1,0 +1,264 @@
+---
+title: "EstadisticaDescriptiva"
+authors: "Abigail Sampedro Gutierrez y Diego Pedraza Barajas"
+lang: es
+format: html
+---
+![](logo.png){width=200px}
+![](actuaria.jpg){width=200px}
+
+
+```{r setup, include=FALSE}
+## librerias necccesarias
+library(plotly)
+library(tidyverse)
+library(lubridate)
+
+# Librería de Yahoo Finance para descargar datos:
+source("https://raw.githubusercontent.com/OscarVDelatorreTorres/yahooFinance/main/datosMultiplesYahooFinance.R")
+
+```
+
+# Descarga de los datos
+ademas de descargarlos también los pasamos a pesos en caso de ser necesario
+
+```{r}
+tickerV=c("ALFAA.MX","BIMBOA.MX","GFNORTEO.MX","GRUMAB.MX","LACOMERUBC.MX","VOLARA.MX","AAPL","GOOGL","META","GRMN","ARKF","ARKX","^MXX","^DJI","^GSPC","CL=F","ZC=F","SB=F","GC=F")
+deD=Sys.Date()-365
+hastaD=Sys.Date()
+per="D"
+paridadFX="USDMXN=X"
+convertirFX=c(FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,FALSE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE)
+
+Datos=historico_multiples_precios(tickers=tickerV,de=deD,hasta=hastaD,periodicidad=per,fxRate=paridadFX,whichToFX=convertirFX)
+```
+## tabla de resumen con el rendimiento continuo
+```{r}
+# Vector de medias:
+mediaAcciones=colMeans(Datos$tablaRendimientosCont[,-1])
+# Vector de desviaciones estándar:
+desvAcciones=apply(Datos$tablaRendimientosCont[,-1],2,sd)
+# Vector de medianas:
+medianaAcciones = apply(Datos$tablaRendimientosCont[,-1], 2, median)
+# Quantil 5%
+q5Acciones = apply(Datos$tablaRendimientosCont[,-1], 2, quantile, probs = 0.05)
+# Quantil 95%
+q95Acciones = apply(Datos$tablaRendimientosCont[,-1], 2, quantile, probs = 0.95)
+# Conteo (número de observaciones)
+conteoAcciones = nrow(Datos$tablaRendimientosCont)
+
+# Tabla de resumen:
+tablaResumen=data.frame(Accion=names(Datos$tablaRendimientosCont)[-1],
+                        Media=mediaAcciones,
+                        DesviacionEstandar=desvAcciones,
+                        Mediana = medianaAcciones,
+                        Q5 = q5Acciones,
+                        Q95 = q95Acciones,
+                        min=apply(Datos$tablaRendimientosCont[,-1],2,min),
+                        max=apply(Datos$tablaRendimientosCont[,-1],2,max),
+                        Conteo = conteoAcciones
+                        )
+tablaResumen
+```
+
+## tabla resumen para datos ganancias/perdidas (PL)
+
+```{r}
+# 1. Calcular la tabla de P/L diaria (diferencia de precios)
+# Usamos la función diff() que calcula la diferencia entre un valor y su anterior.
+# Se aplica a cada columna de la tabla de precios (excepto la primera que es la fecha).
+tablaPL = as.data.frame(apply(Datos$tablaPrecios[,-1], 2, diff))
+
+# 2. Calcular las mismas métricas descriptivas para la tabla de P/L
+# Vector de medias P/L:
+mediaPL = colMeans(tablaPL)
+# Vector de desviaciones estándar P/L:
+desvPL = apply(tablaPL, 2, sd)
+# Vector de medianas P/L:
+medianaPL = apply(tablaPL, 2, median)
+# Quantil 5% P/L:
+q5PL = apply(tablaPL, 2, quantile, probs = 0.05)
+# Quantil 95% P/L:
+q95PL = apply(tablaPL, 2, quantile, probs = 0.95)
+# Conteo (número de observaciones). Será n-1 respecto a los precios.
+conteoPL = nrow(tablaPL)
+
+# 3. Crear la tabla de resumen para P/L
+tablaResumenPL = data.frame(Accion = names(tablaPL),
+                            Media_PL = mediaPL,
+                            DesviacionEstandar_PL = desvPL,
+                            Mediana_PL = medianaPL,
+                            Q5_PL = q5PL,
+                            Q95_PL = q95PL,
+                            min_PL = apply(tablaPL, 2, min),
+                            max_PL = apply(tablaPL, 2, max),
+                            Conteo = conteoPL
+                           )
+# 4. Mostrar la tabla resultante
+tablaResumenPL
+```
+
+
+
+## Grafica en plotly para los siguientes tres casos
+1. Ganacias/perdidas.
+2. precios base 100 a la fecha inicial.
+3. Rendimiento continuo.
+
+```{r}
+# Objeto de base de datos de precios:
+datosGraficaPL=Datos$tablaPL %>%
+pivot_longer(cols=-Date,names_to="Ticker",values_to="PL")
+#DatosGraficaPL
+
+
+# 2) Precios base 100
+precios_raw = Datos$tablaPrecios  # copia
+# Tomo todas las columnas de precio excepto la Date
+precios_sin_date = precios_raw[,-1]
+# Aplico base100 por columna y convierto a data.frame
+preciosB100_vals = as.data.frame(apply(precios_sin_date, 2, function(x) (x / x[1]) * 100))
+preciosB100 = cbind(Date = precios_raw$Date, preciosB100_vals)
+
+DatosGraficaPreciosB100 = preciosB100 %>%
+  pivot_longer(cols = -Date, names_to = "Ticker", values_to = "PrecioBase100")
+
+# 3) Rendimientos (ya tienen Date)
+DatosGraficaRendimientos = Datos$tablaRendimientosCont %>%
+  pivot_longer(cols = -Date, names_to = "Ticker", values_to = "RendimientoCont")
+
+# Plots
+fig1a = plot_ly() %>%
+  add_trace(
+    data = datosGraficaPL,
+    x = ~Date,
+    y = ~PL,
+    color = ~Ticker,
+    type = "scatter",
+    mode = "lines"
+  )
+
+fig1b = plot_ly() %>%
+  add_trace(
+    data = DatosGraficaPreciosB100,
+    x = ~Date,
+    y = ~PrecioBase100,
+    color = ~Ticker,
+    type = "scatter",
+    mode = "lines"
+  )
+
+fig1c = plot_ly() %>%
+  add_trace(
+    data = DatosGraficaRendimientos,
+    x = ~Date,
+    y = ~RendimientoCont,
+    color = ~Ticker,
+    type = "scatter",
+    mode = "lines"
+  )
+
+fig1 = subplot(fig1a, fig1b, fig1c,
+               nrows = 3,
+               shareX = TRUE,
+               titleY = TRUE) %>%
+  layout(title = "Comparativo de acciones",
+         yaxis = list(title = "PL"),
+         yaxis2 = list(title = "Precio Base 100"),
+         yaxis3 = list(title = "Rendimiento Continuo"))
+fig1
+```
+
+
+
+## Mtrriz de dispersión
+
+
+
+Matriz de dispersion para todos los rendimientos continuos
+ademas de 4 más pequeñas para dividirlo por secciones mas faciles de leer
+```{r}
+# Quitamos la columna de fechas
+rendimientos = Datos$tablaRendimientosCont[,-1]
+
+fig_splom_rend = plot_ly(
+  type = "splom",
+  dimensions = lapply(names(rendimientos), function(col) list(label = col, values = rendimientos[[col]])),
+  marker = list(size = 3, opacity = 0.6)
+) %>%
+  layout(title = "Matriz de dispersión - Rendimientos Continuos")
+
+fig_splom_rend
+
+```
+
+```{r}
+# Subconjuntos: usa grep para nombres con caracteres especiales (más robusto)
+rendimientos_subset = rendimientos[, c("ALFAA.MX","BIMBOA.MX","GFNORTEO.MX","GRUMAB.MX","LACOMERUBC.MX","VOLARA.MX")]
+plot_ly(type = "splom",
+        dimensions = lapply(names(rendimientos_subset), function(col) list(label = col, values = rendimientos_subset[[col]])),
+        marker = list(size = 2.5, opacity = 0.6))
+
+```
+
+```{r}
+rendimientos_subset2 = rendimientos[, c("AAPL","GOOGL","META","GRMN","ARKF","ARKX")]
+plot_ly(type = "splom",
+        dimensions = lapply(names(rendimientos_subset2), function(col) list(label = col, values = rendimientos_subset2[[col]])),
+        marker = list(size = 2.5, opacity = 0.6))
+
+```
+
+
+```{r}
+fig_splom_PL = plot_ly(
+  type = "splom",
+  dimensions = lapply(names(tablaPL), function(col) list(label = col, values = tablaPL[[col]])),
+  marker = list(size = 3, opacity = 0.6)
+) %>%
+  layout(title = "Matriz de dispersión - P/L diario")
+
+fig_splom_PL
+
+```
+
+```{r}
+rendimientospl = tablaPL[, c("ALFAA.MX","BIMBOA.MX","GFNORTEO.MX","GRUMAB.MX","LACOMERUBC.MX","VOLARA.MX")]
+
+plot_ly(
+  type = "splom",
+  dimensions = lapply(names(rendimientospl), function(col) list(label = col, values = rendimientospl[[col]])),
+  marker = list(size = 2.5, opacity = 0.6)
+)
+```
+
+```{r}
+rendimientospl1 = tablaPL[, c("AAPL","GOOGL","META","GRMN","ARKF","ARKX")]
+
+plot_ly(
+  type = "splom",
+  dimensions = lapply(names(rendimientospl1), function(col) list(label = col, values = rendimientospl1[[col]])),
+  marker = list(size = 2.5, opacity = 0.6)
+)
+```
+
+
+```{r}
+covarianzasRC=cov(Datos$tablaRendimientosCont[,-1])
+covarianzasRC
+```
+
+```{r}
+correlacionesRC=cor(Datos$tablaRendimientosCont[,-1])
+correlacionesRC
+```
+
+```{r}
+covarianzasPL=cov(Datos$tablaPL[,-1])
+covarianzasPL
+```
+
+```{r}
+correlacionesPL=cor(Datos$tablaPL[,-1])
+correlacionesPL
+```
